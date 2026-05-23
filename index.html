@@ -127,59 +127,89 @@
     <p class="empty" id="empty">아직 아이템이 없습니다.</p>
   </div>
 
-  <script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+    const SUPABASE_URL = 'https://wtxdozhlfvqbtjudidyi.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0eGRvemhsZnZxYnRqdWRpZHlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NjQ3NjUsImV4cCI6MjA5NTA0MDc2NX0.OHd6HDtlk5mdaqipfo-0hpTuJzaFORq1F_IQysBapd0';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const input = document.getElementById('itemInput');
     const list = document.getElementById('list');
     const empty = document.getElementById('empty');
 
-    let items = JSON.parse(localStorage.getItem('shopping') || '[]');
+    let items = [];
 
-    function save() {
-      localStorage.setItem('shopping', JSON.stringify(items));
+    async function loadItems() {
+      const { data, error } = await supabase
+        .from('shopping_items')
+        .select('*')
+        .order('created_at', { ascending: true });
+      if (!error) {
+        items = data;
+        render();
+      }
     }
 
     function render() {
       list.innerHTML = '';
       empty.style.display = items.length ? 'none' : 'block';
 
-      items.forEach((item, i) => {
+      items.forEach(item => {
         const li = document.createElement('li');
         if (item.checked) li.classList.add('checked');
 
         li.innerHTML = `
-          <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggle(${i})">
+          <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="window.toggle('${item.id}', ${item.checked})">
           <span class="name">${item.name}</span>
-          <button class="delete" onclick="remove(${i})">✕</button>
+          <button class="delete" onclick="window.remove('${item.id}')">✕</button>
         `;
         list.appendChild(li);
       });
     }
 
-    function addItem() {
+    window.addItem = async function() {
       const name = input.value.trim();
       if (!name) return;
-      items.push({ name, checked: false });
       input.value = '';
-      save();
-      render();
+      const { data, error } = await supabase
+        .from('shopping_items')
+        .insert({ name, checked: false })
+        .select()
+        .single();
+      if (!error) {
+        items.push(data);
+        render();
+      }
       input.focus();
-    }
+    };
 
-    function toggle(i) {
-      items[i].checked = !items[i].checked;
-      save();
-      render();
-    }
+    window.toggle = async function(id, currentChecked) {
+      const { error } = await supabase
+        .from('shopping_items')
+        .update({ checked: !currentChecked })
+        .eq('id', id);
+      if (!error) {
+        const item = items.find(i => i.id === id);
+        if (item) item.checked = !currentChecked;
+        render();
+      }
+    };
 
-    function remove(i) {
-      items.splice(i, 1);
-      save();
-      render();
-    }
+    window.remove = async function(id) {
+      const { error } = await supabase
+        .from('shopping_items')
+        .delete()
+        .eq('id', id);
+      if (!error) {
+        items = items.filter(i => i.id !== id);
+        render();
+      }
+    };
 
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') window.addItem(); });
 
-    render();
+    loadItems();
   </script>
 </body>
 </html>
