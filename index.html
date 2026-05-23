@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>쇼핑 리스트</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .app {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #222;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-row input:focus { border-color: #4f8ef7; }
+
+    .input-row button {
+      padding: 10px 18px;
+      background: #4f8ef7;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+
+    .input-row button:hover { background: #3a7de0; }
+
+    .list { list-style: none; }
+
+    .list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .list li:last-child { border-bottom: none; }
+
+    .list input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #4f8ef7;
+      flex-shrink: 0;
+    }
+
+    .list .name {
+      flex: 1;
+      font-size: 1rem;
+      color: #333;
+      transition: color 0.2s;
+    }
+
+    .list li.checked .name {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .list .delete {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .list .delete:hover { color: #e05252; }
+
+    .empty {
+      text-align: center;
+      color: #bbb;
+      padding: 32px 0;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>🛒 쇼핑 리스트</h1>
+    <div class="input-row">
+      <input id="itemInput" type="text" placeholder="아이템 입력..." />
+      <button onclick="addItem()">추가</button>
+    </div>
+    <ul class="list" id="list"></ul>
+    <p class="empty" id="empty">아직 아이템이 없습니다.</p>
+  </div>
+
+  <script>
+    const input = document.getElementById('itemInput');
+    const list = document.getElementById('list');
+    const empty = document.getElementById('empty');
+
+    let items = JSON.parse(localStorage.getItem('shopping') || '[]');
+
+    function save() {
+      localStorage.setItem('shopping', JSON.stringify(items));
+    }
+
+    function render() {
+      list.innerHTML = '';
+      empty.style.display = items.length ? 'none' : 'block';
+
+      items.forEach((item, i) => {
+        const li = document.createElement('li');
+        if (item.checked) li.classList.add('checked');
+
+        li.innerHTML = `
+          <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggle(${i})">
+          <span class="name">${item.name}</span>
+          <button class="delete" onclick="remove(${i})">✕</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    function addItem() {
+      const name = input.value.trim();
+      if (!name) return;
+      items.push({ name, checked: false });
+      input.value = '';
+      save();
+      render();
+      input.focus();
+    }
+
+    function toggle(i) {
+      items[i].checked = !items[i].checked;
+      save();
+      render();
+    }
+
+    function remove(i) {
+      items.splice(i, 1);
+      save();
+      render();
+    }
+
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
+
+    render();
+  </script>
+</body>
+</html>

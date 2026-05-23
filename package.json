@@ -1,0 +1,16 @@
+{
+  "name": "shopping-list-app",
+  "version": "1.0.0",
+  "description": "쇼핑 리스트 웹 앱",
+  "main": "index.html",
+  "scripts": {
+    "test": "node playwright.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "jsdom": "^29.1.1",
+    "playwright": "^1.60.0"
+  }
+}
